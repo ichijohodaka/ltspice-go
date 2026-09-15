@@ -10,7 +10,7 @@ go get github.com/ichijohodaka/ltspice-go
 | パッケージ | 中身 |
 |---|---|
 | [`pkg/netlist`](pkg/netlist) | ネットリスト（`.net` / `.asc`）を読む |
-| [`pkg/asc`](pkg/asc) | 回路図（`.asc`）を読んで SVG にする |
+| [`pkg/asc`](pkg/asc) | 回路図（`.asc`）を読んで、SVG とネットリストにする |
 | [`pkg/raw`](pkg/raw) | `.raw`（AC 解析）を読む。ASCII・Binary・UTF-16 のどれでも |
 | [`pkg/run`](pkg/run) | LTspice をバッチ実行して `.raw` を読む |
 | [`pkg/mna`](pkg/mna) | 修正節点解析で回路を数値的に解く |
@@ -70,6 +70,26 @@ src := "* RC\nV1 n1 0 AC 1\nR1 n1 n2 1k\nC1 n2 0 1n\n" +
 d, err := run.Batch(exe, filepath.Join(dir, "t.net"), src, 0)
 v, ok := d.NodeVoltage(0, "n2")
 ```
+
+## 回路図は `.asc` だけで足りる
+
+**`.net` を LTspice に書き出させる必要はありません。** `.asc` には結線の座標が
+入っているので、たどればネットリストになります。
+
+```go
+nl, err := asc.LoadNetlist("circuit.asc")   // .net を見ない
+res, err := mna.Solve(nl, mna.DefaultValues(nl), 2*math.Pi*223.6e3)
+```
+
+これが要るのは、**LTspice が `.asc` を閉じるときに、自分で書いた `.net` を
+消してしまう**ためです。回路図を開くたびにネットリストが消えるので、
+「LTspice で書き出す → 保存する → 閉じると消える」という往復が要りました。
+
+組み立てたものが LTspice の `.net` と同じ回路になることは、2 回路で
+突き合わせて確かめてあります（素子・値・AC・結合・`.ac` 行が一致し、
+ノードの名前を付け替えると接続も一致）。ノードの番号だけは LTspice と
+違います（向こうの振り方が分からないため）。`FLAG` で付けた名前（`y1` など）は
+そのまま残ります。
 
 ## 回路図は `.asc` から描ける
 

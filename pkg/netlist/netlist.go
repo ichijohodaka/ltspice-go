@@ -7,6 +7,7 @@ package netlist
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -140,9 +141,17 @@ func parseFile(path string) (*Netlist, error) {
 		return nil, err
 	}
 	defer f.Close()
+	return Parse(f, path)
+}
 
+// Parse はネットリストの中身を読む。path は「どこから来たか」を Netlist.Path に
+// 入れるためだけのもので、開き直したりはしない。
+//
+// 回路図から組み立てた文字列を渡せるようにしてある。素子行の解釈を2か所に
+// 書くと、片方だけ直る事故が起きる。
+func Parse(r io.Reader, path string) (*Netlist, error) {
 	nl := &Netlist{Path: path}
-	sc := bufio.NewScanner(f)
+	sc := bufio.NewScanner(r)
 	sc.Buffer(make([]byte, 1024*1024), 1024*1024)
 
 	var lines []string

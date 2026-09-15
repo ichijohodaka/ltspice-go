@@ -28,6 +28,8 @@ func main() {
 		err = cmdRun(os.Args[2:])
 	case "svg":
 		err = cmdSVG(os.Args[2:])
+	case "net":
+		err = cmdNet(os.Args[2:])
 	case "-h", "--help", "help":
 		usage()
 		return
@@ -50,6 +52,7 @@ func usage() {
   solve  <netlist>  数値の修正節点解析で解き、各素子の V・I・P を表示する
   run    <netlist>  LTspice をバッチ実行して .raw を読み、結果を表示する
   svg    <回路図.asc> 回路図を SVG にして書き出す
+  net    <回路図.asc> 回路図からネットリストを組み立てて書き出す
 
 各下位コマンドの -h でオプションを見られる。
 `)

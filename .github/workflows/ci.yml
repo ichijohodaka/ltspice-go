@@ -43,3 +43,6 @@ jobs:
           go run ./cmd/ltspice-go solve -freq 223.6k testdata/20260906wptSSSP2.net
           go run ./cmd/ltspice-go svg   -o /tmp/circuit.svg testdata/20260913wpt1to3.asc
           test -s /tmp/circuit.svg
+          # .asc だけでネットリストになる（LTspice に .net を書かせない）
+          go run ./cmd/ltspice-go net   -o /tmp/from-asc.net testdata/20260913wpt1to3.asc
+          go run ./cmd/ltspice-go solve -freq 223.6k /tmp/from-asc.net > /dev/null

@@ -262,3 +262,29 @@ func cmdSVG(args []string) error {
 	}
 	return nil
 }
+
+// --- net ----------------------------------------------------------------
+
+func cmdNet(args []string) error {
+	fs := flag.NewFlagSet("net", flag.ExitOnError)
+	out := fs.String("o", "", "書き出し先（省略すると標準出力）")
+	path, err := arg1(fs, args, "回路図（.asc）")
+	if err != nil {
+		return err
+	}
+	s, err := asc.Load(path)
+	if err != nil {
+		return err
+	}
+	text, err := s.NetlistText()
+	if err != nil {
+		return err
+	}
+	if *out == "" {
+		fmt.Print(text)
+	} else if err := os.WriteFile(*out, []byte(text), 0o644); err != nil {
+		return err
+	}
+	fmt.Fprintf(os.Stderr, "素子 %d 個、結線 %d 本\n", len(s.Symbols), len(s.Wires))
+	return nil
+}
