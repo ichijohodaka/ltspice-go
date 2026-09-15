@@ -21,9 +21,9 @@ go get github.com/ichijohodaka/ltspice-go
 
 ```bash
 go run ./cmd/ltspice-go show  testdata/20260906wptSSSP2.net
-go run ./cmd/ltspice-go solve testdata/20260906wptSSSP2.net -freq 223.6k
-go run ./cmd/ltspice-go raw   testdata/20260913wpt1to3.raw -vars
-go run ./cmd/ltspice-go run   testdata/20260906wptSSSP2.net -freq 223.6k
+go run ./cmd/ltspice-go solve -freq 223.6k testdata/20260906wptSSSP2.net
+go run ./cmd/ltspice-go raw   -vars testdata/20260913wpt1to3.raw
+go run ./cmd/ltspice-go run   -freq 223.6k testdata/20260906wptSSSP2.net
 ```
 
 `solve` の出力（一部）。`P` は吸収した平均電力で、電源は負・抵抗は正、

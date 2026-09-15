@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version: stable
+          cache: false   # 依存パッケージが0個で go.sum がないため
+
+      - name: gofmt
+        run: |
+          unformatted=$(gofmt -l .)
+          if [ -n "$unformatted" ]; then
+            echo "gofmt が必要なファイル:"
+            echo "$unformatted"
+            exit 1
+          fi
+
+      - name: go vet
+        run: go vet ./...
+
+      - name: go test
+        run: go test -race ./...
+
+      # pkg/run には LTspice を実際に走らせるテストが1件あり、CI には
+      # LTspice が無いので飛ぶ。飛んだことが見えるように -v で出す
+      # （黙って通ると、走ったのか飛んだのか分からなくなる）。
+      - name: LTspice を要するテストが飛んだことを確かめる
+        run: go test -race -v -run TestBatchRealLTspice ./pkg/run/
+
+      - name: コマンドが動くこと
+        run: |
+          go run ./cmd/ltspice-go show  testdata/20260906wptSSSP2.net
+          go run ./cmd/ltspice-go raw   -vars testdata/20260913wpt1to3.raw
+          go run ./cmd/ltspice-go solve -freq 223.6k testdata/20260906wptSSSP2.net
