@@ -10,6 +10,7 @@ go get github.com/ichijohodaka/ltspice-go
 | パッケージ | 中身 |
 |---|---|
 | [`pkg/netlist`](pkg/netlist) | ネットリスト（`.net` / `.asc`）を読む |
+| [`pkg/asc`](pkg/asc) | 回路図（`.asc`）を読んで SVG にする |
 | [`pkg/raw`](pkg/raw) | `.raw`（AC 解析）を読む。ASCII・Binary・UTF-16 のどれでも |
 | [`pkg/run`](pkg/run) | LTspice をバッチ実行して `.raw` を読む |
 | [`pkg/mna`](pkg/mna) | 修正節点解析で回路を数値的に解く |
@@ -24,6 +25,7 @@ go run ./cmd/ltspice-go show  testdata/20260906wptSSSP2.net
 go run ./cmd/ltspice-go solve -freq 223.6k testdata/20260906wptSSSP2.net
 go run ./cmd/ltspice-go raw   -vars testdata/20260913wpt1to3.raw
 go run ./cmd/ltspice-go run   -freq 223.6k testdata/20260906wptSSSP2.net
+go run ./cmd/ltspice-go svg   testdata/20260913wpt1to3.asc > circuit.svg
 ```
 
 `solve` の出力（一部）。`P` は吸収した平均電力で、電源は負・抵抗は正、
@@ -68,6 +70,35 @@ src := "* RC\nV1 n1 0 AC 1\nR1 n1 n2 1k\nC1 n2 0 1n\n" +
 d, err := run.Batch(exe, filepath.Join(dir, "t.net"), src, 0)
 v, ok := d.NodeVoltage(0, "n2")
 ```
+
+## 回路図は `.asc` から描ける
+
+`.asc` には**線と素子の座標がそのまま入っている**ので、配置を考える必要が
+ありません。LTspice が置いた通りの位置が書いてあり、引かれている線を写すだけで
+図になります。
+
+```
+SHEET 1 1076 680            図面の大きさ
+WIRE 144 -32 -32 -32        線（両端の座標）
+SYMBOL res -48 0 R0         素子の種類・位置・向き
+SYMATTR InstName RS         直前の素子の属性
+FLAG -32 272 0              接地などのラベル
+```
+
+素子の絵は `res` / `cap` / `ind2` / `voltage` / `current` を組み込みで持ちます。
+知らない種類に出会ったら、**黙って省かずに**四角と種類名で置きます（図から
+消えると回路を読み違えるため）。
+
+色は `currentColor` なので、置いた先の CSS の色をそのまま拾います
+（暗い背景でも明るい背景でも見えます）。
+
+### 文字コードが3通りある
+
+LTspice は `.asc` を**システムのコードページ**で書くことも、UTF-16LE で書く
+こともあります。素子値の `100µ` の µ が **0xB5 の1バイト**で入っているのが
+実際の例で、UTF-8 として読むと化けます。先頭の2バイトで UTF-16 を見分け、
+そうでなければ UTF-8 として読み、UTF-8 として通らなければ Windows-1252 と
+みなします。
 
 ## 符号の約束
 
@@ -133,3 +164,4 @@ LTspice が入っていれば `pkg/run` が実際に走らせる。入ってい�
 ## ライセンス
 
 MIT
+

@@ -10,6 +10,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/ichijohodaka/ltspice-go/pkg/asc"
 	"github.com/ichijohodaka/ltspice-go/pkg/mna"
 	"github.com/ichijohodaka/ltspice-go/pkg/netlist"
 	"github.com/ichijohodaka/ltspice-go/pkg/raw"
@@ -231,4 +232,33 @@ func cmdRun(args []string) error {
 func cstr(c complex128) string {
 	return fmt.Sprintf("%.6g%+.6gj (|%.4g| ∠%.1f°)",
 		real(c), imag(c), cmplx.Abs(c), cmplx.Phase(c)*180/math.Pi)
+}
+
+// --- svg ----------------------------------------------------------------
+
+func cmdSVG(args []string) error {
+	fs := flag.NewFlagSet("svg", flag.ExitOnError)
+	out := fs.String("o", "", "書き出し先（省略すると標準出力）")
+	noText := fs.Bool("no-text", false, "図面の注記・ディレクティブを描かない")
+	pad := fs.Int("pad", 16, "図の周りの余白")
+	path, err := arg1(fs, args, "回路図（.asc）")
+	if err != nil {
+		return err
+	}
+	s, err := asc.Load(path)
+	if err != nil {
+		return err
+	}
+	svg := s.SVG(asc.SVGOptions{Pad: *pad, HideTexts: *noText})
+	if *out == "" {
+		fmt.Println(svg)
+	} else if err := os.WriteFile(*out, []byte(svg), 0o644); err != nil {
+		return err
+	}
+	fmt.Fprintf(os.Stderr, "結線 %d 本、部品 %d 個、ラベル %d 個\n",
+		len(s.Wires), len(s.Symbols), len(s.Flags))
+	for _, u := range s.Unknown {
+		fmt.Fprintf(os.Stderr, "注意: %s の絵を持っていないので四角で代えました\n", u)
+	}
+	return nil
 }
