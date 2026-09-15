@@ -1,0 +1,7 @@
+# 改行は全プラットフォームで LF に揃える。
+# gofmt は CRLF を「整形が必要」と報告するため。
+* text=auto eol=lf
+
+# ただし testdata は LTspice が書いたファイルそのもの。改行を含めて
+# 原形のまま保つ（LTspice に読ませ直すことがあるため）。
+testdata/** -text
